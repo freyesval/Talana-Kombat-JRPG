@@ -1,8 +1,8 @@
+# ============================================================================================================================================ #
 
 # El programa debe recibir un json en el cual, existen dos jugadores
 # Cada jugador puede moverse para la izquierda (A), derecha (D), arriba (W) o abajo (S). 
 # Además de dar golpes (P) o patadas (K)
-
 
 # Inicio de la partida:
 # Parte el jugador que envía al inicio una combinación menor de movimientos y patadas
@@ -11,7 +11,7 @@
 # En caso de empate de golpes, parte el jugador 1
 
 # Restricciones / Limitaciones:
-#
+
 # Cada personaje inicia con 6 Puntos de vida
 # Un personaje muere si sus Puntos de vida llegan a 0
 # Tony SIEMPRE ataca hacia la derecha
@@ -20,7 +20,7 @@
 # Los golpes no pueden ser bloqueados (son efectivos)
 
 # Restricciones / Limitaciones archivo .json
-# 
+
 # Los movimientos pueden ser string de largo máximo 5 (puede ser Vacío)   -> "AWSDS", "", "A"
 # Los golpes son de máximo largo 1 (puede ser Vacío)     -> "K", "P", ""
 
@@ -40,24 +40,40 @@
     
     
 # Ejemplos de archivo json:
-gameplay = {
-    "player1":
-    {
-        "movimientos":["D","DSD","S","DSD","SD"],
-        "golpes":["K","P","","K","P"]
-    },
-    "player2": 
-    {
-        "movimientos":["SA","SA","SA","ASA","SA"],
-        "golpes":["K","","K","P","P"]
-    }
-} 
+# gameplay = {
+#     "player1":
+#     {
+#         "movimientos":["D","DSD","S","DSD","SD"],
+#         "golpes":["K","P","","K","P"]
+#     },
+#     "player2": 
+#     {
+#         "movimientos":["SA","SA","SA","ASA","SA"],
+#         "golpes":["K","","K","P","P"]
+#     }
+# } 
 
 # Se pueden realizar movimientos y combinación de ataques especiales (un DSDSD + P -> Taladoken o SDDSD + K -> Remuyuken por ejemplo)
+
+# ============================================================================================================================================ #
+
+
 import re
 import time
-def validate_special_attacks(string, words):
-    regex = f'({words})$'
+import json
+
+
+
+# Limitaciones del programa:
+# No se valida que el archivo json si los movimientos son de un largo mayor a 5 
+# y si los golpes son de largo mayor a 1
+# Se da por hecho que el archivo viene OK
+
+def validate_special_attacks(string, x):
+    '''
+    Validates if the string contains the regular expression for the word that ends with x term
+    '''
+    regex = f'({x})$'
     if re.search(regex, string):
         return True
     else:
@@ -65,6 +81,9 @@ def validate_special_attacks(string, words):
 
 
 def validate_special_attacks_player1(string):
+    '''
+    Validate if the string contain the special attacks in the final in this for player 1
+    '''
     special_attacks = ["DSDP", "SDK","P","K"]
     j = 3
     for i in range(len(special_attacks)):
@@ -77,6 +96,9 @@ def validate_special_attacks_player1(string):
 
 
 def validate_special_attacks_player2(string):
+    '''
+    Validate if the string contain the special attacks in the final in this for player 2
+    '''
     special_attacks = ["SAK", "ASAP","P","K"]
     j = 3
     for i in range(len(special_attacks)):
@@ -88,11 +110,14 @@ def validate_special_attacks_player2(string):
     return j
 
 
-def starting_player(player1, player2):
-    # Parte el jugador que envía al inicio una combinación menor de movimientos y patadas
-    # Si hay empate, parte el que tenga menos movimientos
-    # Si hay empate de movimientos, inicia el que tenga menos golpes
-    # En caso de empate de golpes, parte el jugador 1
+def starting_player(player1, player2):    
+    '''
+    Determines which player starts the game based on a combination of moves and kicks:    
+    1. The player who sends a lower combination of moves and kicks at the start begins the game. 
+    2. In case of a tie, the player with fewer moves starts. 
+    3. If there is a tie in moves, the player with fewer hits starts. 
+    4. In case of a tie in hits, player 1 starts.
+    '''
     movimiento_golpe_p1 = player1["movimientos"][0] + player1["golpes"][1]
     movimiento_golpe_p2 = player2["movimientos"][0] + player2["golpes"][1]
     
@@ -119,6 +144,10 @@ def concatenate_mov_golpes(player):
 
 
 def attack(player_name, attack_type, player, jugadas_1, jugadas_2, turno):
+    '''
+    Iniciate the attack of one player to the other one
+    returns the HP of the attack
+    '''
     if attack_type == 3 and player == "player1":
         print(f"{player_name} ha lanzado un Taladoken!")
         return 3
@@ -147,8 +176,10 @@ def attack(player_name, attack_type, player, jugadas_1, jugadas_2, turno):
         largo = len(jugadas_1[turno]) if player == "player1" else len(jugadas_2[turno])
         if largo == 0:
             print(f"{player_name} se ha quedado quieto!")
+            return 0
         else:
             print(f"{player_name} se ha movido")
+            return 0
 
 
 def gameplay(gameplay):
@@ -163,82 +194,33 @@ def gameplay(gameplay):
     jugadas_2 = concatenate_mov_golpes(gameplay[second_player])
     nombre1 = "Tony" if start_player == "player1" else "Arnaldor"
     nombre2 = "Arnaldor" if second_player == "player2" else "Tony"
+    
     print("Empieza la partida!")
     time.sleep(0.1)
-    while(player1_hp >=0 or player2_hp >=0):
+    while(player1_hp >0 and player2_hp >0):
         tipo_ataque = validate_special_attacks_player1(jugadas_1[turno]) if start_player == "player1" else validate_special_attacks_player2(jugadas_2[turno])
-        
-        
-        
-        if tipo_ataque == 3 and start_player == "player1":
-            print(f"{nombre1} ha lanzado un Taladoken!")
-            player2_hp-=3
-        elif tipo_ataque == 3 and start_player == "player2":
-            print(f"{nombre1} ha lanzado un Remuyuken!")
-            player2_hp-=3
-        elif tipo_ataque == 2 and start_player == "player1":
-            print(f"{nombre1} ha lanzado un Remuyuken!")
-            player2_hp-=2
-        elif tipo_ataque == 2 and start_player == "player2":
-            print(f"{nombre1} ha lanzado un Taladoken!")
-            player2_hp-=2
-        elif tipo_ataque == 1 and start_player == "player1":
-            print(f"{nombre1} ha lanzado un puñetazo")
-            player2_hp-=1
-        elif tipo_ataque == 1 and start_player == "player2":
-            print(f"{nombre1} ha lanzado un puñetazo!")
-            player2_hp-=1
-        elif tipo_ataque == 0 and start_player == "player1":
-            print(f"{nombre1} ha lanzado una patada")
-            player2_hp-=1
-        elif tipo_ataque == 0 and start_player == "player2":
-            print(f"{nombre1} ha lanzado una patada!")
-            player2_hp-=1
-        elif tipo_ataque == -1:
-            largo = len(jugadas_1[turno]) if start_player == "player1" else len(jugadas_2[turno])
-            if largo == 0:
-                print(f"{nombre1} se ha quedado quieto!")
-            else:
-                print(f"{nombre1} se ha movido")
+        player2_hp -= attack(nombre1, tipo_ataque, start_player, jugadas_1, jugadas_2, turno)
+        if player2_hp <=0:
+            continue
         time.sleep(0.1)
         tipo_ataque = validate_special_attacks_player1(jugadas_1[turno]) if second_player == "player1" else validate_special_attacks_player2(jugadas_2[turno])
-        if tipo_ataque == 3 and start_player == "player1":
-            print(f"{nombre1} ha lanzado un Taladoken!")
-            player1_hp-=3
-        elif tipo_ataque == 3 and start_player == "player2":
-            print(f"{nombre1} ha lanzado un Remuyuken!")
-            player1_hp-=3
-        elif tipo_ataque == 2 and start_player == "player1":
-            print(f"{nombre1} ha lanzado un Remuyuken!")
-            player1_hp-=2
-        elif tipo_ataque == 2 and start_player == "player2":
-            print(f"{nombre1} ha lanzado un Taladoken!")
-            player1_hp-=2
-        elif tipo_ataque == 1 and start_player == "player1":
-            print(f"{nombre1} ha lanzado un puñetazo")
-            player1_hp-=1
-        elif tipo_ataque == 1 and start_player == "player2":
-            print(f"{nombre1} ha lanzado un puñetazo!")
-            player1_hp-=1
-        elif tipo_ataque == 0 and start_player == "player1":
-            print(f"{nombre1} ha lanzado una patada")
-            player1_hp-=1
-        elif tipo_ataque == 0 and start_player == "player2":
-            print(f"{nombre1} ha lanzado una patada!")
-            player1_hp-=1
-        elif tipo_ataque == -1:
-            largo = len(jugadas_1[turno]) if start_player == "player1" else len(jugadas_2[turno])
-            if largo == 0:
-                print(f"{nombre1} se ha quedado quieto!")
-            else:
-                print(f"{nombre1} se ha movido")
-        
+        player1_hp -= attack(nombre2, tipo_ataque, second_player, jugadas_1, jugadas_2, turno)
+        time.sleep(0.1)
         turno+=1
     
     if player1_hp <=0:
         print(f"{nombre1} ha sido derrotado!")
+        print(f"{nombre2} ha ganado la pelea y aún le queda {player2_hp} de vida!")
     else:
         print(f"{nombre2} ha sido derrotado!")
+        print(f"{nombre1} ha ganado la pelea y aún le queda {player1_hp} de vida!")
         
     print('Fin del juego')
         
+
+if __name__ == "__main__":
+    
+    with open('talana_kombat_jrpg2.json','r') as file:
+        data = json.load(file)
+    gameplay(data)
+    
